@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+
+{% block head %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+{% if project_uuid %}
+
+<script>
+    $(document).ready(function () {
+        var refresh_id = setInterval(function () {
+            $.get(
+                "{{ url_for('submit.get_job_status', project_uuid = project_uuid) }}",
+                function (data) {
+                    console.log(data);
+                    if (data == "done") {
+                        window.location.replace("{{ url_for('report.show', project_name=project_name, project_uuid=project_uuid) }}");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "project error") {
+                        window.location = window.location;
+                        document.getElementById("report_page").innerHTML = "<p>Projeto não encontrado. Por favor tente novamente mais tarde.</p>";
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "report error") {
+                        window.location = window.location;
+                        document.getElementById("report_page").innerHTML = "<p>Houve um erro na geração do relatório. Por favor tente novamente mais tarde.</p>";
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                }
+            )
+        }
+            , 5000);
+    });
+
+</script>
+{% endif %}
+
+{% endblock %}
+
+
+{% block title %}
+Relatório de Vulnerabilidades
+{% endblock %}
+
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;" id="report_page">
+
+    {% if report_error_messages %}
+    <div class="alert" role="alert" style="color: firebrick;">
+        {% for error in report_error_messages %}
+        <p>{{error}}</p>
+        {% endfor %}
+    </div>
+    {% else %}
+
+    {% if not req %}
+    {% if new_project %}
+    <h3>Seu relatório está sendo gerado, por favor aguarde até o fim do processamento.</h3>
+    <h3>Isso pode levar alguns minutos.</h3>
+    {% else %}
+    <h3>Buscando relatório, por favor aguarde.</h3>
+    {% endif %}
+    {% endif %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

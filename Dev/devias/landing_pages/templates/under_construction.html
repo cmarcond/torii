@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+Em Construção
+{% endblock %}
+
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;">
+    <div class="d-flex justify-content-center p-3">
+        <h2> Ops! Ainda estamos construindo esta página.</h2>
+    </div>
+    <div class="d-flex justify-content-center p-3">
+        <a class="btn" href="{{url_for('home.show')}}" role="button"
+            style="background-color: #105670; color: white;">Voltar ao início</a>
+    </div>
+    
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}
+Exemplo Heatmap
+{% endblock %}
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;">
+
+    <div class="d-flex flex-row flex-wrap">
+        <div class="col-8 mb-3">
+            <h1>Exemplo Heatmap</h1>
+            <p>Gerado em 01/11/2022, 20:55</p>
+        </div>
+        <div class="col d-flex align-items-center">
+            <h5>
+                <span style="color: firebrick;">5</span> vulnerabilidades encontradas
+            </h5>
+        </div>
+    </div>
+
+    <div class="container-fluid border" style="background-color: white; margin-bottom: 5%;">
+        {{ data|safe }}
+    </div>
+
+</div>
+{% endblock %}

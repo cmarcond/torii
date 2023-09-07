@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+
+{% block head %}
+{% if (recent_stats) and (dates) %}
+{% if recent_stats['total_findings'] %}
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    window.onload = function () {
+        google.charts.load("current", { packages: ["corechart"] });
+        google.charts.load("current", { packages: ["calendar"] });
+
+        google.charts.setOnLoadCallback(drawVulnTypesChart);
+        google.charts.setOnLoadCallback(drawSeverityChart);
+        google.charts.setOnLoadCallback(drawCalendar);
+
+        function drawVulnTypesChart() {
+
+            var data = google.visualization.arrayToDataTable([
+                ["Tipo de Vulnerabilidade", "Quantidade"],
+                ["SAST", parseInt("{{ recent_stats['types']['SAST'] }}")],
+                ["Secrets", parseInt("{{ recent_stats['types']['secrets'] }}")],
+                ["Containers", parseInt("{{ recent_stats['types']['containers'] }}")],
+                ["SCA", parseInt("{{ recent_stats['types']['SCA'] }}")],
+            ]);
+
+            var options = {
+                'title': 'Distribuição de Vulnerabilidades por Tipo',
+                'chartArea.top': 0,
+                'chartArea.left': 0,
+                'legend.alignment': 'center',
+                'titleTextStyle': {
+                    'color': 'black',
+                    'fontName': 'Helvetica',
+                    'fontSize': 15,
+                    'bold': false,
+                },
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('vulntypeschart'));
+
+            chart.draw(data, options);
+        }
+
+
+        function drawSeverityChart() {
+            var data = google.visualization.arrayToDataTable([
+                ["Severidade", "Quantidade"],
+                ["Crítica", parseInt("{{ recent_stats['severity']['critical'] }}")],
+                ["Alta", parseInt("{{ recent_stats['severity']['high'] }}")],
+                ["Média", parseInt("{{ recent_stats['severity']['medium'] }}")],
+                ["Baixa", parseInt("{{ recent_stats['severity']['low'] }}")],
+                ["Informativa", parseInt("{{ recent_stats['severity']['info'] }}")],
+            ]);
+
+            var options = {
+                'title': 'Distribuição de Vulnerabilidades por Severidade',
+                'colors': ['firebrick', 'orangered', 'rgb(245, 183, 91)', 'green', 'blue'],
+                'legend.alignment': 'center',
+                'chartArea.top': 0,
+                'chartArea.left': 0,
+                'titleTextStyle': {
+                    'color': 'black',
+                    'fontName': 'Helvetica',
+                    'fontSize': 15,
+                    'bold': false,
+                },
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('severitychart'));
+
+            chart.draw(data, options);
+        }
+
+
+        function drawCalendar() {
+            var dataTable = new google.visualization.DataTable();
+            dataTable.addColumn({ type: 'date', id: 'Date' });
+            dataTable.addColumn({ type: 'number', id: 'Projects' });
+
+            json = '{{dates | safe}}';
+            var dates = JSON.parse(json);
+
+            var calendar_rows = [];
+            for (var date in dates) {
+                calendar_rows.push([new Date(date), parseInt(dates[date])]);
+            }
+
+            console.log(calendar_rows)
+
+            dataTable.addRows(calendar_rows);
+
+            var chart = new google.visualization.Calendar(document.getElementById('submitcalendar'));
+
+            var options = {
+                'title': "Histórico de Vulnerabilidades",
+            //    'titleTextStyle': {
+            //        'color': 'black',
+            //        'fontName': 'Helvetica',
+            //        'fontSize': 15,
+            //        'bold': false,
+            //    },
+            };
+
+            chart.draw(dataTable, options);
+
+        }
+
+    };
+
+</script>
+
+{% endif %}
+{% endif %}
+{% endblock %}
+
+
+{% block title %}
+Início
+{% endblock %}
+
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;">
+    <div class="row">
+        <div class="col-5">
+            <h1> DEVIaS </h1>
+            <p id="test_paragraph"></p>
+
+            {% if g.user %}
+
+            <h3> Bem vindo, {{g.user.username}} </h3>
+        </div>
+
+        <div class="d-flex col ms-3 me-3 rounded" style="height: 120px; background-color: firebrick;">
+            <div class="d-flex col-3 ms-3 justify-content-center align-items-center">
+                {% if recent_stats["total_findings"] < 100 %} <p
+                    style="font-weight: bold; font-size: 50px; color: white;">{{recent_stats["total_findings"]}}</p>
+                    {% elif recent_stats["total_findings"] < 1000 %} <p
+                        style="font-weight: bold; font-size: 40px; color: white;">{{recent_stats["total_findings"]}}</p>
+                        {% elif recent_stats["total_findings"] < 10000 %} <p
+                            style="font-weight: bold; font-size: 30px; color: white;">{{recent_stats["total_findings"]}}
+                            </p>
+                            {% else %}
+                            <p style="font-weight: bold; font-size: 20px; color: white;">
+                                {{recent_stats["total_findings"]}}</p>
+                            {% endif %}
+            </div>
+            <div class="d-flex col border-start m-3 ps-3 align-items-center" style="color: white;">
+                <p style="margin-top: 15px;">Vulnerabilidades encontradas nos últimos 30 dias.</p>
+            </div>
+        </div>
+
+        <div class="d-flex col ms-3 me-3 rounded align-items-center" style="height: 120px; background-color: green;">
+            <div class="d-flex col-4 border-end justify-content-center">
+                <p style="font-weight: bold; font-size: 50px; color: white;">0</p>
+            </div>
+            <div class="col mt-3" style="color: white; margin-left: 30px;">
+                <p>Vulnerabilidades resolvidas.</p>
+            </div>
+        </div>
+    </div>
+
+    <hr style="margin-top: 50px;">
+
+    <div style="margin-top: 30px; margin-bottom: 30px;">
+        <h5>Estatísticas</h5>
+    </div>
+
+    <div class="row" style="height: 375px; margin-bottom: 30px;">
+        <div class="d-flex col me-3 border justify-content-center align-items-center"
+            style="background-color: white;">
+            <div class="pt-3">
+                <div id="vulntypeschart" style="width: 500px; height: 350px;">
+                    <p>Distribuição de Vulnerabilidades por Tipo</p>
+                    <p>Não há dados a serem mostrados.</p>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex col ms-3 border justify-content-center align-items-center"
+            style="background-color: white;">
+            <div class="pt-3">
+                <div id="severitychart" style="width: 500px; height: 350px;">
+                    <p>Distribuição de Vulnerabilidades por Severidade</p>
+                    <p>Não há dados a serem mostrados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="d-flex row" style="margin-bottom: 30px;">
+        <!-- <div class="col ms-3 me-3 border" style="background-color: white;">
+            <div class="p-3">
+                <p>Projetos por Linguagem</p>
+            </div>
+        </div> -->
+        <div class="d-flex col border justify-content-center align-items-center"
+            style="background-color: white;">
+            <div class="pt-3">
+                <div id="submitcalendar" style="width: 950px; min-height: 500px;">
+                    <p>Histórico de Vulnerabilidades</p>
+                    <p>Não há dados a serem mostrados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+</div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

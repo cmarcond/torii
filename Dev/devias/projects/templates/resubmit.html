@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+{% endblock %}
+
+
+{% block title %}
+Ressubmeter Projeto
+{% endblock %}
+
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;">
+    <h1>{{project_name}}</h1>
+
+    <br>
+    {% if submit_method == "upload" %}
+
+
+    {% elif submit_method == "gitlab" %}
+    <h4>Adicionar Webhook ao Projeto Gitlab</h4>
+
+    <p>Adicione um webhook ao seu projeto Gitlab, para que novas versões sejam automaticamente analisadas. Certifique-se
+        que você tem permissão de mantenedor(a) ou dono(a) do projeto.</p>
+
+    <ol>
+        <li>Abra o projeto Gitlab que você deseja importar.</li>
+        <br>
+
+        <li>Na barra à esquerda, selecione as configurações de webhooks.</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-webhooks-settings.png" alt="" width="200px">
+        </div>
+        <br>
+
+        <li>No campo "URL", insira a URL:
+            <code>https://app.secdevias.com/gitlab_hook</code>
+        </li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-webhook-url.png" alt="" width="700px">
+        </div>
+        <br>
+
+        <li>No campo "Secret Token", insira o token:
+            <code>{{project_uuid}}</code>
+        </li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/secret-token-field.png" alt="" width="650px">
+        </div>
+        <br>
+
+        <li>Mantenha a opção "Push Events" selecionada.</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/push-events-trigger.png" alt="" width="650px">
+        </div>
+        <br>
+    </ol>
+
+    <p>Por fim, adicione o webhook. Desse modo, seu projeto Gitlab será reanalisado quando houver atualizações. Caso
+        deseje editar ou deletar o webhook, basta selecionar o botão correspondente.</p>
+
+    <div class="d-flex justify-content-center">
+        <img src="../../static/add-webhook.png" alt="" width="650px">
+    </div>
+    <br>
+
+    <hr>
+
+    <h4>Criar Token para o Projeto Gitlab</h4>
+
+    <p>Crie um deploy token do seu projeto Gitlab, para que a aplicação Secdevias possa acessá-lo.</p>
+
+    <ol>
+        <li>Abra o projeto Gitlab que você deseja importar.</li>
+        <br>
+        <li>Na barra à esquerda, selecione as configurações de repositório.</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-repository-settings.png" alt="" width="200px">
+        </div>
+        <br>
+
+        <li>Expanda a seção "deploy tokens".</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-deploy-tokens.png" alt="" width="900px">
+        </div>
+        <br>
+
+        <li>No campo "Name", dê um nome ao seu token.</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-deploy-token-name.png" alt="" width="800px">
+        </div>
+        <br>
+
+        <li>No campo "Expiration Date", defina uma data de validade para o token. Caso deseje que o token nunca expire,
+            deixe o campo em branco.</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-deploy-token-expiration.png" alt="" width="800px">
+        </div>
+        <br>
+
+        <li>No campo "Username", defina um nome de usuário para seu token.</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-deploy-token-username.png" alt="" width="800px">
+        </div>
+        <br>
+
+        <li>No seção "Scopes", selecione a opção "read_repository" e crie o token.</li>
+        <br>
+        <div class="d-flex justify-content-center">
+            <img src="../../static/gitlab-deploy-token-scopes.png" alt="" width="400px">
+        </div>
+        <br>
+    </ol>
+
+    <p>Após criar seu token, insira o nome de usuário do token, e o token, mostrados na janela abaixo, nos campos a
+        seguir. Feito isso, novos relatórios de segurança serão gerados automaticamente para novas versões do projeto.
+    </p>
+
+    <div class="d-flex justify-content-center">
+        <img src="../../static/gitlab-deployed-token.png" alt="" width="800px">
+    </div>
+
+    <form method="POST">
+        {{ gitlab_token_form.hidden_tag() }}
+        <div class="d-flex mt-3 justify-content-center">
+            <div class="mb-3" style="width: 40em; margin-top: 5vh;">
+                {{ gitlab_token_form.token_username.label(class="form-label") }}
+                {{ gitlab_token_form.token_username(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe
+                o nome
+                de usuário do token.')", oninput="setCustomValidity('')") }}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <div class="mb-3" style="width: 40em;">
+                {{ gitlab_token_form.token.label(class="form-label") }}
+                {{ gitlab_token_form.token(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe o
+                token.')",
+                oninput="setCustomValidity('')") }}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <div class="mb-3" style="width: 40em;">
+                {{ gitlab_token_form.submit(class="btn", style="color: white; background-color: #105670;") }} <br>
+            </div>
+        </div>
+    </form>
+
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}
+Cadastro • Devias
+{% endblock %}
+
+{% block content %}
+<div class="p-4" style="margin-top: 80px; margin-left: auto; margin-right: auto; width: 30em">
+    <div class="mb-3">
+        <h1>Cadastro</h1>
+    </div>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="alert" role="alert" style="color: firebrick;">
+            {% for field, errors in form.errors.items() %}
+            {% for error in errors %}
+            <p>{{error}}</p>
+            {% endfor %}
+            {% endfor %}
+            {% for error in register_error_messages %}
+            <p>{{error}}</p>
+            {% endfor %} 
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <div class="mb-3">
+                    {{ form.first_name.label(class="form-label") }}
+                    {{ form.first_name(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe seu nome.')", oninput="setCustomValidity('')") }}
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="mb-3">
+                    {{ form.last_name.label(class="form-label") }}
+                    {{ form.last_name(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe seu sobrenome.')", oninput="setCustomValidity('')") }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 me-2">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe um nome de usuário.')", oninput="setCustomValidity('')") }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 me-2">
+                {{ form.email.label(class="form-label")}}
+                {{ form.email(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe seu email.')", oninput="setCustomValidity('')") }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 me-2">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control", oninvalid="this.setCustomValidity('Por favor, crie uma senha.')", oninput="setCustomValidity('')") }}
+                <div class="form-text">A senha deve ter pelo menos 8 caracteres.</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 me-2">
+                {{ form.pass_confirm.label(class="form-label") }}
+                {{ form.pass_confirm(class="form-control", oninvalid="this.setCustomValidity('Por favor, repita sua senha.')", oninput="setCustomValidity('')") }}
+            </div>
+        </div>
+
+
+        <div class="mb-3 mt-3">
+            {{ form.submit(class="btn", style="color: white; background-color: #105670;") }} <br>
+            <br>
+            <p>Seu cadastro será avaliado, e sua conta será criada após aprovação.</p>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}

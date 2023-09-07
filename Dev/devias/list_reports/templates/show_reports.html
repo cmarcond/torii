@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Submissões - {{g.user.username}}
+{% endblock %}
+
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;">
+    <h1>Projetos Submetidos</h1>
+    {% if projects_limit == 0 %}
+    
+    <div class="d-flex flex-column justify-content-center align-items-center"
+        style="background-color: white; margin-top: 50px; border: 1px solid #ddd; border-radius: 5px; height: 30vh; margin-bottom: 50px;">
+
+        <p>Para submeter um projeto, primeiro confirme seu email.</p>
+        <a class="btn" href="{{url_for('user.confirm_account')}}" role="button"
+            style="background-color: #105670; color: white;">Enviar email de confirmação</a>
+    </div>
+
+    {% elif not items %}
+
+    <div class="d-flex flex-column justify-content-center align-items-center"
+        style="background-color: white; margin-top: 50px; border: 1px solid #ddd; border-radius: 5px; height: 30vh; margin-bottom: 50px;">
+
+        <p>Você ainda não submeteu nenhum projeto.</p>
+        <a class="btn" href="{{url_for('submit.index')}}" role="button"
+            style="background-color: #105670; color: white;">Submeter Código</a>
+    </div>
+
+    {% else %}
+    <div class="d-flex flex-row flex-wrap">
+        <div class="col d-flex justify-content-end align-items-center me-3">
+            <a class="btn" href="{{url_for('submit.index')}}" role="button"
+                style="background-color: #105670; color: white; width: 170px; height:40px;">Submeter Código</a>
+        </div>
+    </div>
+
+    <div class="alert" role="alert" style="color: firebrick;" id="project_errors">
+
+    </div>
+
+    <div class="d-flex flex-column"
+        style="background-color: white; margin-top: 50px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 50px;">
+
+        <div class="d-flex justify-content-center p-3">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+
+
+                    {% if items.current_page == 1 %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{url_for('report_list.user_reports', page_number = items.prev_page)}}"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+
+                    {% for page in range(1,items.total_pages+1) %}
+
+                    <li class="page-item"><a class="page-link"
+                            href="{{url_for('report_list.user_reports', page_number = page)}}">{{page}}</a></li>
+
+                    {% endfor %}
+
+                    {% if items.current_page == items.total_pages %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{url_for('report_list.user_reports', page_number = items.next_page)}}"
+                            aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+
+
+                </ul>
+            </nav>
+        </div>
+
+
+        {% for item in items._list._data %}
+        <div class="row">
+            <div class="col-10">
+                <div class="row" style="margin-top: 30px; margin-left: 40px;">
+                    <a href="{{url_for('project.project_page', project_name=item['name'])}}">
+                        <h4>{{item['name']}}</h4>
+                    </a>
+                </div>
+                <div class="row" style="margin-left: 40px; height: 25px;">
+                    <p>Submetido em: {{item['created_at']}}</p>
+                </div>
+                <div class="row" style="margin-left: 40px;">
+                    <p>Última atualização: {{item['last_activity_at']}}</p>
+                </div>
+            </div>
+
+            <div class="d-flex col justify-content-end align-items-center" style="margin-right: 30px;">
+                <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#{{item['name']}}Modal"
+                    style="background-color: transparent;">
+                    <img src="../../static/ExcludeIconRed.png" alt="Excluir Projeto" width="25px">
+                </button>
+            </div>
+        </div>
+
+        <div class="modal fade" id="{{item['name']}}Modal" tabindex="-1" aria-labelledby="exampleModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Deletar Projeto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tem certeza que deseja excluir o projeto submetido?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn" href="{{url_for('project.delete', project_name = item['name'])}}" role="button"
+                            style="background-color: rgb(184, 22, 22); color: white;">Excluir</a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr style="width: 100%; margin-bottom:0%;">
+        {% endfor %}
+
+
+    </div>
+
+
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "helm.fullname" . }}-config"
+  labels:
+    {{- include "helm.labels" . | nindent 4 }}
+data:
+  GITLAB_DEVIAS_IP: {{ .Values.gitlab.ip | default "127.0.0.1" }}

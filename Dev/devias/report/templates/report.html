@@ -1,0 +1,3509 @@
+{% extends "base.html" %}
+
+<!-- Add Language select -->
+{% block head %}
+<script>
+    function selectVuln() {
+        document.getElementById('vuln_report').style.display = 'block';
+        document.getElementById('sev_report').style.display = 'none';
+    }
+
+    function selectSev() {
+        document.getElementById('vuln_report').style.display = 'none';
+        document.getElementById('sev_report').style.display = 'block';
+    }
+
+</script>
+{% endblock %}
+
+
+{% block title %}
+{{data["report_name"]}}
+{% endblock %}
+
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;">
+
+    <!-- Título e Número de vulnerabilidades -->
+    <div class="d-flex flex-row flex-wrap">
+        <div class="col-8 mb-3">
+            <h1>{{data["report_name"]}}</h1>
+            <p>{{data["report_info"]}}</p>
+        </div>
+        <div class="col d-flex align-items-center">
+            <h5>
+                <span style="color: firebrick;">{{data["number_findings"]}}</span> vulnerabilidades encontradas
+            </h5>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end" style="margin-right: 75px;">
+        <div class="me-3">
+            <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#downloadModal"
+                style="background-color: transparent;">
+                <img src="../../static/down-arrow.png" alt="Baixar Relatório" width="25px">
+            </button>
+        </div>
+        <div class="dropdown">
+            <button class="btn dropdown-toggle border" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown"
+                aria-expanded="false" style="color: black; background-color: white;">
+                Ordenar por
+            </button>
+            <ul class="dropdown-menu dropdown-menu-lg-end" aria-labelledby="dropdownMenuButton1">
+                <li><a class="dropdown-item" href="#" onclick="selectVuln(); return false;">Tipo de Vulnerabilidade</a>
+                </li>
+                <li><a class="dropdown-item" href="#" onclick="selectSev(); return false;">Severidade</a></li>
+                <li><a class="dropdown-item" href="#">Linguagem</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="downloadModalLabel">Baixar Relatório</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Deseja exportar o relatório em PDF?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <a class="btn" href="#" role="button"
+                        style="background-color: #105670; color: white;">Confirmar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ************************************************************************ -->
+    <!--                         POR TIPO DE VULNERABILIDADE                      -->
+    <!-- ************************************************************************ -->
+
+    <!-- 4 abas (cada aba possivelmente será compilada em paralelo no futuro) -->
+    <div id="vuln_report" style="display: none;">
+        <ul class="nav nav-tabs mt-3" id="report_tabs" role="tablist">
+            <!-- SAST -->
+            {% if SAST_report|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active border-start border-top border-end" id="sast-tab" data-bs-toggle="tab"
+                    data-bs-target="#sast" type="button" role="tab" aria-controls="sast" aria-selected="true"
+                    style="color: #105670; font-size:20px;">SAST</button>
+            </li>
+            {% endif %}
+
+
+            <!-- Secrets -->
+            {% if Secrets_report|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border-start border-top border-end" id="secrets-tab" data-bs-toggle="tab"
+                    data-bs-target="#secrets" type="button" role="tab" aria-controls="secrets" aria-selected="false"
+                    style="color: #105670; font-size:20px;">Secrets</button>
+            </li>
+            {% endif %}
+
+
+            <!-- Container -->
+            {% if Containers_report|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border-start border-top border-end" id="container-tab" data-bs-toggle="tab"
+                    data-bs-target="#container" type="button" role="tab" aria-controls="container" aria-selected="false"
+                    style="color: #105670; font-size:20px;">Containers</button>
+            </li>
+            {% endif %}
+
+
+            <!-- SCA Analysis -->
+            {% if SCA_report|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border-start border-top border-end" id="SCA-tab" data-bs-toggle="tab"
+                    data-bs-target="#SCA" type="button" role="tab" aria-controls="SCA" aria-selected="false"
+                    style="color: #105670; font-size:20px;">SCA</button>
+            </li>
+            {% endif %}
+
+        </ul>
+
+        <!-- Conteúdo da aba SAST -->
+        <div class="tab-content mb-3" id="reportContent" style="background-color: white;">
+            <div class="tab-pane fade show active" id="sast" role="tabpanel" aria-labelledby="sast-tab">
+                <div class="d-flex align-items-start">
+
+                    <!-- Listagem de abas para cada vulnerabilidade SAST -->
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="sast-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(SAST_report|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="sast-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#sast-{{item}}" type="button" role="tab" aria-controls="sast-{{item}}"
+                            aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="sast-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#sast-{{item}}" type="button" role="tab" aria-controls="sast-{{item}}"
+                            aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+                    </div>
+
+                    <!-- Conteúdo de cada vulnerabilidade SAST -->
+                    <div class="tab-content p-3 col-10" id="sastTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(SAST_report|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="sast-{{item}}" role="tabpanel"
+                            aria-labelledby="sast-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{SAST_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{SAST_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if SAST_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif SAST_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif SAST_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91)">
+                                                {% elif SAST_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{SAST_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if SAST_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if SAST_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if SAST_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if SAST_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{SAST_report[item]['component_name']}}</strong> versão
+                                            <strong>{{SAST_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{SAST_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if SAST_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if SAST_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{SAST_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ SAST_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if SAST_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if SAST_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if SAST_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="sast-{{item}}" role="tabpanel"
+                            aria-labelledby="sast-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{SAST_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{SAST_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if SAST_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif SAST_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif SAST_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91)
+                                        ;">
+                                                {% elif SAST_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{SAST_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if SAST_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if SAST_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if SAST_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if SAST_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{SAST_report[item]['component_name']}}</strong> versão
+                                            <strong>{{SAST_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{SAST_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if SAST_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if SAST_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{SAST_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ SAST_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if SAST_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if SAST_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if SAST_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SAST_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Secrets -->
+            <div class="tab-pane fade" id="secrets" role="tabpanel" aria-labelledby="secrets-tab">
+                <div class="d-flex align-items-start">
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="secrets-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(Secrets_report|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="secrets-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#secrets-{{item}}" type="button" role="tab" aria-controls="secrets-{{item}}"
+                            aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="secrets-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#secrets-{{item}}" type="button" role="tab" aria-controls="secrets-{{item}}"
+                            aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+
+                    </div>
+
+                    <!-- Conteúdo de cada secret -->
+                    <div class="tab-content p-3 col-10" id="secretsTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(Secrets_report|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="secrets-{{item}}" role="tabpanel"
+                            aria-labelledby="secrets-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Secrets_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Secrets_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if Secrets_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif Secrets_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif Secrets_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91)
+                                        ;">
+                                                {% elif Secrets_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{Secrets_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Secrets_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Secrets_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Secrets_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Secrets_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Secrets_report[item]['component_name']}}</strong> versão
+                                            <strong>{{Secrets_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Secrets_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if Secrets_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+                                <!-- Resumo -->
+                                {#{% if Secrets_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Secrets_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Secrets_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if Secrets_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if Secrets_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if Secrets_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="secrets-{{item}}" role="tabpanel"
+                            aria-labelledby="secrets-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Secrets_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Secrets_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if Secrets_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif Secrets_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif Secrets_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91)
+                                        ;">
+                                                {% elif Secrets_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{Secrets_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Secrets_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Secrets_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Secrets_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Secrets_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Secrets_report[item]['component_name']}}</strong> versão
+                                            <strong>{{Secrets_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Secrets_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if Secrets_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if Secrets_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Secrets_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Secrets_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if Secrets_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if Secrets_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if Secrets_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Secrets_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Container -->
+            <div class="tab-pane fade" id="container" role="tabpanel" aria-labelledby="container-tab">
+                <div class="d-flex align-items-start">
+
+                    <!-- Abas de cada vulnerabilidade de container -->
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="container-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(Containers_report|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="container-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#container-{{item}}" type="button" role="tab"
+                            aria-controls="container-{{item}}" aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="container-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#container-{{item}}" type="button" role="tab"
+                            aria-controls="container-{{item}}" aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+
+                    </div>
+
+                    <!-- Conteúdo de cada vulnerabilidade de container -->
+                    <div class="tab-content p-3 col-10" id="containerTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(Containers_report|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="container-{{item}}" role="tabpanel"
+                            aria-labelledby="container-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Containers_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Containers_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if Containers_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif Containers_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif Containers_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91)
+                                        ;">
+                                                {% elif Containers_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{Containers_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Containers_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Containers_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Containers_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Containers_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Containers_report[item]['component_name']}}</strong> versão
+                                            <strong>{{Containers_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Containers_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if Containers_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+                                <!-- Resumo -->
+                                {#{% if Containers_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Containers_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Containers_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if Containers_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if Containers_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if Containers_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="container-{{item}}" role="tabpanel"
+                            aria-labelledby="container-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Containers_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Containers_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+                                
+
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if Containers_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif Containers_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif Containers_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91)
+                                        ;">
+                                                {% elif Containers_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{Containers_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Containers_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Containers_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Containers_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Containers_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Containers_report[item]['component_name']}}</strong> versão
+                                            <strong>{{Containers_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Containers_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if Containers_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if Containers_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Containers_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Containers_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if Containers_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if Containers_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if Containers_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Containers_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- SCA analysis -->
+            <div class="tab-pane fade" id="SCA" role="tabpanel" aria-labelledby="SCA-tab">
+                <div class="d-flex align-items-start">
+
+                    <!-- Abas de análise de componentes -->
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="SCA-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(SCA_report|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="SCA-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#SCA-{{item}}" type="button" role="tab"
+                            aria-controls="SCA-{{item}}" aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="SCA-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#SCA-{{item}}" type="button" role="tab"
+                            aria-controls="SCA-{{item}}" aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+                    </div>
+
+                    <!-- Conteúdo da análise de componentes -->
+                    <div class="tab-content p-3 col-10" id="componentTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(SCA_report|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="SCA-{{item}}" role="tabpanel"
+                            aria-labelledby="SCA-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{SCA_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{SCA_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+                                
+
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if SCA_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif SCA_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif SCA_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91)
+                                        ;">
+                                                {% elif SCA_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{SCA_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if SCA_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if SCA_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if SCA_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if SCA_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{SCA_report[item]['component_name']}}</strong> versão
+                                            <strong>{{SCA_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{SCA_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if SCA_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if SCA_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{SCA_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ SCA_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if SCA_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if SCA_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if SCA_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="SCA-{{item}}" role="tabpanel"
+                            aria-labelledby="SCA-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{SCA_report[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{SCA_report[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                
+                                <!-- Severidade -->
+                                <h5>
+                                    {% if SCA_report[item]['severity'] == "Crítica" %}
+                                    <span style="color: firebrick;">
+                                        {% elif SCA_report[item]['severity'] == "Alta" %}
+                                        <span style="color:orangered;">
+                                            {% elif SCA_report[item]['severity'] == "Média" %}
+                                            <span style="color:rgb(245, 183, 91);">
+                                                {% elif SCA_report[item]['severity'] == "Baixa" %}
+                                                <span style="color: green;">
+                                                    {% else %}
+                                                    <span style="color: blue;">
+                                                        {% endif %}
+                                                        Severidade: {{SCA_report[item]['severity']}}
+                                                    </span>
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if SCA_report[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if SCA_report[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if SCA_report[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if SCA_report[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{SCA_report[item]['component_name']}}</strong> versão
+                                            <strong>{{SCA_report[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{SCA_report[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if SCA_report[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if SCA_report[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{SCA_report[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ SCA_report[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if SCA_report[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if SCA_report[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if SCA_report[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{SCA_report[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+    <!-- ************************************************************************ -->
+    <!--                                POR SEVERIDADE                            -->
+    <!-- ************************************************************************ -->
+    <div id="sev_report">
+        <ul class="nav nav-tabs mt-3" id="sev_report_tabs" role="tablist">
+            <!-- Severidade Crítica -->
+            {% if Critical|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active border-start border-top border-end" id="critical-tab"
+                    data-bs-toggle="tab" data-bs-target="#critical" type="button" role="tab" aria-controls="critical"
+                    aria-selected="true" style="color: firebrick; font-size:20px; font-weight: bold;">Crítica</button>
+            </li>
+            {% endif %}
+
+
+            <!-- Severidade Alta -->
+            {% if High|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border-start border-top border-end" id="high-tab" data-bs-toggle="tab"
+                    data-bs-target="#high" type="button" role="tab" aria-controls="high" aria-selected="false"
+                    style="color: orangered; font-size:20px; font-weight: bold;">Alta</button>
+            </li>
+            {% endif %}
+
+
+            <!-- Severidade Média -->
+            {% if Medium|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border-start border-top border-end" id="medium-tab" data-bs-toggle="tab"
+                    data-bs-target="#medium" type="button" role="tab" aria-controls="medium" aria-selected="false"
+                    style="color: rgb(245, 183, 91); font-size:20px; font-weight: bold;">Média</button>
+            </li>
+            {% endif %}
+
+
+            <!-- Severidade Baixa -->
+            {% if Low|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border-start border-top border-end" id="low-tab" data-bs-toggle="tab"
+                    data-bs-target="#low" type="button" role="tab" aria-controls="low" aria-selected="false"
+                    style="color: green; font-size:20px; font-weight: bold;">Baixa</button>
+            </li>
+            {% endif %}
+
+
+            <!-- Severidade Informativa -->
+            {% if Info|length != 0 %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border-start border-top border-end" id="info-tab" data-bs-toggle="tab"
+                    data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="false"
+                    style="color: blue; font-size:20px; font-weight: bold;">Informativa</button>
+            </li>
+            {% endif %}
+
+
+        </ul>
+
+        <div class="tab-content mb-3" id="sevReportContent" style="background-color: white;">
+
+            <!-- Severidade Crítica -->
+            <div class="tab-pane fade show active" id="critical" role="tabpanel" aria-labelledby="critical-tab">
+                <div class="d-flex align-items-start">
+
+                    <!-- Listagem de abas para cada vulnerabilidade crítica -->
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="critical-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(Critical|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="critical-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#critical-{{item}}" type="button" role="tab"
+                            aria-controls="critical-{{item}}" aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="critical-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#critical-{{item}}" type="button" role="tab"
+                            aria-controls="critical-{{item}}" aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+                    </div>
+
+                    <!-- Conteúdo de cada vulnerabilidade crítica -->
+                    <div class="tab-content p-3 col-10" id="criticalTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(Critical|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="critical-{{item}}" role="tabpanel"
+                            aria-labelledby="critical-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Critical[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Critical[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Critical[item]['type']}}
+                                </h5>
+
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Critical[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Critical[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Critical[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Critical[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Critical[item]['component_name']}}</strong> versão
+                                            <strong>{{Critical[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Critical[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if Critical[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if Critical[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Critical[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Critical[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if Critical[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if Critical[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if Critical[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="critical-{{item}}" role="tabpanel"
+                            aria-labelledby="critical-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Critical[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Critical[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Critical[item]['type']}}
+                                </h5>
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Critical[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Critical[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Critical[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Critical[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Critical[item]['component_name']}}</strong> versão
+                                            <strong>{{Critical[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Critical[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if Critical[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if Critical[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Critical[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Critical[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if Critical[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if Critical[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if Critical[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Critical[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Severidade Alta -->
+            <div class="tab-pane fade" id="high" role="tabpanel" aria-labelledby="high-tab">
+                <div class="d-flex align-items-start">
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="high-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(High|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="high-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#high-{{item}}" type="button" role="tab" aria-controls="high-{{item}}"
+                            aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="high-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#high-{{item}}" type="button" role="tab" aria-controls="high-{{item}}"
+                            aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+
+                    </div>
+
+                    <!-- Conteúdo de cada vulnerabilidade de severidade alta -->
+                    <div class="tab-content p-3 col-10" id="highTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(High|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="high-{{item}}" role="tabpanel"
+                            aria-labelledby="high-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{High[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{High[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{High[item]['type']}}
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if High[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if High[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if High[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if High[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{High[item]['component_name']}}</strong> versão
+                                            <strong>{{High[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{High[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if High[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+                                <!-- Resumo -->
+                                {#{% if High[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{High[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ High[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if High[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if High[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if High[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="high-{{item}}" role="tabpanel"
+                            aria-labelledby="high-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{High[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{High[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{High[item]['type']}}
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if High[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if High[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if High[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if High[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{High[item]['component_name']}}</strong> versão
+                                            <strong>{{High[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{High[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if High[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if High[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{High[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ High[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if High[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if High[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if High[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{High[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Severidade Média -->
+            <div class="tab-pane fade" id="medium" role="tabpanel" aria-labelledby="medium-tab">
+                <div class="d-flex align-items-start">
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="medium-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(Medium|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="medium-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#medium-{{item}}" type="button" role="tab" aria-controls="medium-{{item}}"
+                            aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="medium-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#medium-{{item}}" type="button" role="tab" aria-controls="medium-{{item}}"
+                            aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+
+                    </div>
+
+                    <!-- Conteúdo de cada vulnerabilidade de severidade média -->
+                    <div class="tab-content p-3 col-10" id="mediumTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(Medium|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="medium-{{item}}" role="tabpanel"
+                            aria-labelledby="medium-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Medium[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Medium[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Medium[item]['type']}}
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Medium[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Medium[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Medium[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Medium[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Medium[item]['component_name']}}</strong> versão
+                                            <strong>{{Medium[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Medium[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if Medium[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+                                <!-- Resumo -->
+                                {#{% if Medium[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Medium[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Medium[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if Medium[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if Medium[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if Medium[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="medium-{{item}}" role="tabpanel"
+                            aria-labelledby="medium-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Medium[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Medium[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Medium[item]['type']}}
+                                </h5>
+
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Medium[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Medium[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Medium[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Medium[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Medium[item]['component_name']}}</strong> versão
+                                            <strong>{{Medium[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Medium[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if Medium[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if Medium[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Medium[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Medium[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if Medium[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if Medium[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if Medium[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Medium[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Severidade Baixa -->
+            <div class="tab-pane fade" id="low" role="tabpanel" aria-labelledby="low-tab">
+                <div class="d-flex align-items-start">
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="low-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(Low|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="low-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#low-{{item}}" type="button" role="tab" aria-controls="low-{{item}}"
+                            aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="low-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#low-{{item}}" type="button" role="tab" aria-controls="low-{{item}}"
+                            aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+
+                    </div>
+
+                    <!-- Conteúdo de cada vulnerabilidade de severidade baixa -->
+                    <div class="tab-content p-3 col-10" id="lowTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(Low|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="low-{{item}}" role="tabpanel"
+                            aria-labelledby="low-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Low[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Low[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Low[item]['type']}}
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Low[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Low[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Low[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Low[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Low[item]['component_name']}}</strong> versão
+                                            <strong>{{Low[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Low[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if Low[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+                                <!-- Resumo -->
+                                {#{% if Low[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Low[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Low[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if Low[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if Low[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if Low[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="low-{{item}}" role="tabpanel"
+                            aria-labelledby="low-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Low[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Low[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Low[item]['type']}}
+                                </h5>
+
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Low[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Low[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Low[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Low[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Low[item]['component_name']}}</strong> versão
+                                            <strong>{{Low[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Low[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if Low[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if Low[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Low[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Low[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if Low[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if Low[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if Low[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Low[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Severidade Informativa -->
+            <div class="tab-pane fade" id="info" role="tabpanel" aria-labelledby="info-tab">
+                <div class="d-flex align-items-start">
+                    <div class="nav nav-pills justify-content-center mt-3 col-1" id="info-tab" role="tablist"
+                        aria-orientation="vertical" style="max-height:800px; width: 75px; overflow-y: auto;">
+                        {% for item in range(Info|length) %}
+
+                        {% if item == 0 %}
+                        <button class="nav-link active" id="info-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#info-{{item}}" type="button" role="tab" aria-controls="info-{{item}}"
+                            aria-selected="true">{{item+1}}
+                        </button>
+                        {% else %}
+                        <button class="nav-link" id="info-tab-{{item}}" data-bs-toggle="pill"
+                            data-bs-target="#info-{{item}}" type="button" role="tab" aria-controls="info-{{item}}"
+                            aria-selected="false">{{item+1}}
+                        </button>
+                        {% endif %}
+
+                        {% endfor %}
+
+                    </div>
+
+                    <!-- Conteúdo de cada vulnerabilidade com severidade informativa -->
+                    <div class="tab-content p-3 col-10" id="infoTabContent"
+                        style="display: flex; flex-grow: 100; max-height:800px; overflow-y:auto;">
+                        {% for item in range(Info|length) %}
+                        {% if item == 0 %}
+                        <div class="tab-pane fade show active vuln" id="info-{{item}}" role="tabpanel"
+                            aria-labelledby="info-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color:white;">
+
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Info[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Info[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Info[item]['type']}}
+                                </h5>
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Info[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Info[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Info[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Info[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Info[item]['component_name']}}</strong> versão
+                                            <strong>{{Info[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Info[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mitigação -->
+                                {% if Info[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+                                <!-- Resumo -->
+                                {#{% if Info[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Info[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Info[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+                                <!-- File path -->
+                                {% if Info[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Linha de código -->
+                                {% if Info[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Sugestão de código -->
+                                {% if Info[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                            </div>
+                        </div>
+
+
+                        {% else %}
+                        <div class="tab-pane fade vuln" id="info-{{item}}" role="tabpanel"
+                            aria-labelledby="info-tab-{{item}}"
+                            style="width: 100%; height: 100%; background-color: white;">
+                            <div class="container-fluid">
+
+                                <!-- Título -->
+                                <div class="row">
+                                    <div class="col-11">
+                                        <h3>{{Info[item]['title']}}</h3>
+                                    </div>
+                                    <div class="d-flex col mt-1 justify-content-end">
+                                        <button type="button" class="btn" data-bs-toggle="modal"
+                                            data-bs-target="#{{Info[item]['title']}}Modal"
+                                            style="background-color: transparent;">
+                                            <img src="../../static/more.png" alt="Feedback"
+                                                width="25px">
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                <!-- Tipo de Vulnerabilidade -->
+                                <h5>
+                                    Tipo: {{Info[item]['type']}}
+                                </h5>
+
+
+                                <hr>
+
+                                <!-- Tempo de resolução -->
+                                {% if Info[item]['days_to_resolve'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Tempo para resolver: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['days_to_resolve']}} dias</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Impacto -->
+                                {% if Info[item]['impact'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Impacto: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['impact']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Componente + Versão -->
+                                {% if Info[item]['component_name'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Componente: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        {% if Info[item]['component_version'] is not none %}
+                                        <p>
+                                            <strong>{{Info[item]['component_name']}}</strong> versão
+                                            <strong>{{Info[item]['component_version']}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p>
+                                            <strong>{{Info[item]['component_name']}}</strong>
+                                        </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Mitigação -->
+                                {% if Info[item]['mitigation'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Mitigação: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['mitigation']}}</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                {% endif %}
+
+
+                                <!-- Resumo -->
+                                {#{% if Info[item]['summary'] is not none %}
+                                <!-- <div class="d-flex">
+                                <div class="col-2 me-3">
+                                    <p>Resumo:</p>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p>{{Info[item]['summary']}}</p>
+                                </div>
+                            </div>
+                            <hr> -->
+                                {% endif %}#}
+
+
+                                <!-- Descrição -->
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Descrição: </p>
+                                    </div>
+                                    <div class="flex-grow-1" style="white-space: pre-line;">
+                                        <p> {{ Info[item]['description']|safe }} </p>
+                                    </div>
+                                </div>
+
+
+                                <!-- File path -->
+                                {% if Info[item]['file_path'] is not none %}
+                                <hr>
+
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Local do arquivo: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['file_path']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Linha de código -->
+                                {% if Info[item]['line'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Linha: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['line']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+                                <!-- Sugestão de Código -->
+                                {% if Info[item]['code'] is not none %}
+                                <div class="d-flex">
+                                    <div class="col-2 me-3">
+                                        <p>Sugestão de código: </p>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p>{{Info[item]['code']}}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+
+
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+{% endblock %}

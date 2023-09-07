@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}
+Entrar
+{% endblock %}
+
+{% block content %}
+<div class="p-4" style="margin-top: 100px; margin-left: auto; margin-right: auto; width: 20em">
+    <div class="mb-3">
+        <h1>Fazer Login</h1>
+    </div>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        
+        {% if form.errors %}
+        <div class="alert" role="alert" style="color: firebrick;">
+            {% for field, errors in form.errors.items() %}
+            {% for error in errors %}
+            <p>{{error}}</p>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+
+
+        {% if login_status == "Wrong Credentials" %}
+        <div class="alert" role="alert" style="color: firebrick;">
+            Email ou senha incorretos.
+        </div>
+        {% elif login_status == "Server Error" %}
+        <div class="alert" role="alert" style="color: firebrick;">
+            Não foi possível realizar o login. Tente novamente mais tarde.
+        </div>
+        {% endif %}
+        
+
+        <div class="mb-3">
+            {{ form.email.label(class="form-label") }}
+            {{ form.email(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe seu email.')", oninput="setCustomValidity('')") }}
+        </div>
+        <div class="mb-3">
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control", oninvalid="this.setCustomValidity('Por favor, informe sua senha.')",  oninput="setCustomValidity('')") }}
+        </div>
+        <div class="mb-3">
+            {{ form.submit(class="btn", style="color: white; background-color: #105670;") }} <br>
+        </div>
+
+        <p>Não possui conta? <a href="{{url_for('user.register_gitlab')}}">Cadastre-se.</a></p>
+    </form>
+
+    <hr style="width: 100%;">
+
+    <h4>Autenticação Federada</h4>
+    <a href="{{url_for('user.saml_sso')}}">Login (CAFe Expresso)</a>
+
+</div>
+{% endblock %}

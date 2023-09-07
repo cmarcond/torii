@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+
+{% block head %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+{% if project_uuid %}
+<script>
+    $(document).ready(function () {
+        var refresh_id = setInterval(function () {
+            $.get(
+                "{{ url_for('submit.get_job_status', project_uuid = project_uuid) }}",
+                function (data) {
+                    console.log(data);
+                    if (data == "started") {
+                        $("#messageModal").modal("show");
+                        document.getElementById("projectStatus").innerHTML = "<h3>Seu projeto está sendo importado. Por favor aguarde.</h3>";
+                    }
+                    else if (data == "running") {
+                        window.location.replace("{{ url_for('report.get', project_name=project_name) }}");
+                    }
+                    else if (data == "upload invalid format") {
+                        document.getElementById("upload_errors").innerHTML = "<p>Nome ou formato de arquivo inválido.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "upload naming error") {
+                        document.getElementById("upload_errors").innerHTML = "<p>Você já submeteu um projeto com este nome.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "upload import error") {
+                        document.getElementById("upload_errors").innerHTML = "<p>Não foi possível importar seu projeto. Por favor, tente novamente mais tarde. <br> Caso o erro persista, verifique suas credenciais Git.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "gitlab branch error") {
+                        document.getElementById("gitlab_errors").innerHTML = "<p>Não foi encontrado o ramo main/master do projeto.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "gitlab invalid format") {
+                        document.getElementById("gitlab_errors").innerHTML = "<p>URL inválida.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "gitlab credential error") {
+                        document.getElementById("gitlab_errors").innerHTML = "<p>Credenciais Gitlab incorretas. Por favor verifique se seu usuário e senha estão corretos.<br>Caso o erro persista, verifique suas credenciais Git.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "gitlab naming error") {
+                        document.getElementById("gitlab_errors").innerHTML = "<p>Você já submeteu um projeto com este nome.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "gitlab ci file error") {
+                        document.getElementById("gitlab_errors").innerHTML = "<p>Seu projeto já possui um arquivo gitlab-ci.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "gitlab import error") {
+                        document.getElementById("gitlab_errors").innerHTML = "<p>Não foi possível importar seu projeto. Por favor, tente novamente mais tarde.</p>";
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                    else if (data == "report error") {
+                        document.getElementById("report_errors").innerHTML = '<p style="color: firebrick;">Houve um erro na geração do relatório. Por favor tente novamente mais tarde.</p>';
+                        $("#messageModal").modal("hide");
+                        $.get("{{ url_for('submit.delete_job_status', project_uuid = project_uuid) }}");
+                        clearInterval(refresh_id);
+                    }
+                }
+            )
+        }
+            , 3000);
+    });
+
+</script>
+{% endif %}
+
+{% endblock %}
+
+
+
+{% block title %}
+Submissão de Código • Devias
+{% endblock %}
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px; margin-bottom: 30px;">
+    <h1>Submissão de Código</h1>
+    <div id="report_errors"></div>
+
+    <div class="modal fade" id="messageModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="messageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body" id="projectStatus" style="height: 70%; width: 90%;">
+                    <!-- <h3 id="projectStatus"></h3> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" id="submitTabs" role="tablist" style="margin-top: 50px;">
+        <!-- Upload de arquivo zip -->
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active border-start border-top border-end" id="zip-tab" data-bs-toggle="tab"
+                data-bs-target="#zip" type="button" role="tab" aria-controls="zip" aria-selected="true"
+                style="color: #105670; font-size:20px;">Arquivo Zip</button>
+        </li>
+
+        <!-- Clone de repo Gitlab -->
+        <li class="nav-item" role="presentation">
+            <button class="nav-link border-start border-top border-end" id="gitlab-tab" data-bs-toggle="tab"
+                data-bs-target="#gitlab" type="button" role="tab" aria-controls="gitlab" aria-selected="false"
+                style="color: #105670; font-size:20px;">Projeto Gitlab</button>
+        </li>
+
+    </ul>
+
+
+    <div class="tab-content mb-3" id="submitForms" style="background-color: white;">
+
+        <!-- Upload de arquivo zip -->
+        <div class="tab-pane fade active show" id="zip" role="tabpanel" aria-labelledby="zip-tab">
+            <div class="d-flex flex-column flex-fill flex-wrap p-3 m-3">
+                <div class="row mt-3" style="margin-left: 75px">
+                    <h4>Fazer Upload</h4>
+                </div>
+
+                <div class="row mt-3" style="margin-left: 100px; margin-right: 100px;">
+                    <form action="{{url_for('submit.upload_code')}}" method="POST" enctype="multipart/form-data">
+                        {{zip_form.hidden_tag()}}
+
+                        <div class="alert" role="alert" style="color: firebrick;" id="upload_errors">
+                            {% for field, errors in zip_form.errors.items() %}
+                            {% for error in errors %}
+                            <p>{{error}}</p>
+                            {% endfor %}
+                            {% endfor %}
+                            {% for error in zip_submit_errors %}
+                            <p>{{error}}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {# {{ zip_form.file.label(class="form-group") }} #}
+                            {{ zip_form.file(class="form-control", oninvalid="this.setCustomValidity('Por favor,
+                            faça upload do seu código.')", oninput="setCustomValidity('')") }}
+                            <div class="form-text">Tipo de arquivo aceito: .zip.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ zip_form.zip_project_name.label(class="form-label") }}
+                            {{ zip_form.zip_project_name(class="form-control",
+                            oninvalid="this.setCustomValidity('Por favor,
+                            dê um nome ao projeto.')", oninput="setCustomValidity('')") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ zip_form.submit(class="btn", style="color: white; background-color: #105670;") }}
+                            <br>
+                        </div>
+
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Clone Gitlab -->
+        <div class="tab-pane fade" id="gitlab" role="tabpanel" aria-labelledby="gitlab-tab">
+            <div class="d-flex flex-column flex-fill flex-wrap p-3 m-3">
+                <div class="row mt-3" style="margin-left: 75px">
+                    <div class="col-9">
+                        <h4>Clonar Projeto do Gitlab</h4>
+                    </div>
+                </div>
+
+
+                <div class="row mt-3" style="margin-left: 100px; margin-right: 100px;">
+                    <form action="{{url_for('submit.clone_gitlab')}}" method="POST">
+                        {{ gitlab_form.hidden_tag() }}
+
+                        <div class="alert" role="alert" style="color: firebrick;" id="gitlab_errors">
+                            {% for field, errors in gitlab_form.errors.items() %}
+                            {% for error in errors %}
+                            <p>{{error}}</p>
+                            {% endfor %}
+                            {% endfor %}
+                            {% for error in gitlab_submit_errors %}
+                            <p>{{error}}</p>
+                            {% endfor %}
+
+                        </div>
+
+                        <div class="mb-3">
+                            <p style="font-size: 20px;">Credenciais</p>
+
+                            <div class="row">
+                                <div class="col">
+                                    {{ gitlab_form.username.label(class="form-label") }}
+                                    {{ gitlab_form.username(class="form-control",
+                                    oninvalid="this.setCustomValidity('Por favor, informe seu nome de usuário.')",
+                                    oninput="setCustomValidity('')") }}
+                                    <div class="form-text">Informe seu nome de usuário do Gitlab de onde deseja clonar o
+                                        projeto.</div>
+                                </div>
+
+                                <div class="col">
+                                    {{ gitlab_form.password.label(class="form-label") }}
+                                    {{ gitlab_form.password(class="form-control",
+                                    oninvalid="this.setCustomValidity('Por favor, informe sua senha.')",
+                                    oninput="setCustomValidity('')") }}
+                                    <div class="form-text">Informe sua senha do Gitlab de onde deseja clonar o projeto.
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="mb-3">
+                            {{ gitlab_form.gitlab_repo_http.label(class="form-label") }}
+                            {{ gitlab_form.gitlab_repo_http(class="form-control", oninvalid="this.setCustomValidity('Por
+                            favor, informe a URL do projeto.')", oninput="setCustomValidity('')") }}
+                            <div class="form-text">A URL deve ter o formato:
+                                'https://gitlab.dominio.com/nome-de-usuario/nome-do-projeto.git'.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ gitlab_form.gitlab_project_name.label(class="form-label") }}
+                            {{ gitlab_form.gitlab_project_name(class="form-control",
+                            oninvalid="this.setCustomValidity('Por
+                            favor, dê um nome ao projeto.')", oninput="setCustomValidity('')") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ gitlab_form.submit(class="btn", style="color: white; background-color: #105670;") }}
+                            <br>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

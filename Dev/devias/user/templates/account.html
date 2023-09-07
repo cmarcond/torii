@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}
+Perfil - {{g.user.username}}
+{% endblock %}
+
+
+{% block content %}
+<div class="container p-4" style="margin-top: 100px;">
+    <div class="d-flex flex-row align-items-center">
+        <div class="col-3 d-flex justify-content-center me-3 align-self-center">
+            <img src="{{g.user.avatar_url}}" alt="" width="100" style="border-radius: 50%; align-content: end;">
+        </div>
+        <div class="col">
+            <h1>{{g.user.username}}</h1>
+        </div>
+    </div>
+
+    <div class="d-flex flex-row mb-3">
+        <div class="col-3 d-flex justify-content-center">
+            <a href="{{url_for('home.under_construction')}}" style="font-size: medium;">Editar Imagem</a>
+        </div>
+    </div>
+
+    <hr style="margin-top: 50px; margin-left: 20px; width: 90%;">
+
+    <div class="d-flex flex-row flex-wrap">
+        <div class="col-3 d-flex justify-content-start mt-3" style="margin-left: 40px;">
+            <h2>Informações</h2>
+        </div>
+    
+        <div class="col d-flex justify-content-center">
+            <form method="POST" style="margin-top: 30px; margin-left: auto; margin-right: auto; width: 30em;">
+                {{info_form.hidden_tag()}}
+        
+                <div class="mb-3">
+                    {{ info_form.email.label(class="form-label") }}
+                    {{ info_form.email(class="form-control", value=g.user.email) }}
+                </div>
+                <div class="mb-3">
+                    {{ info_form.name.label(class="form-label") }}
+                    {{ info_form.name(class="form-control", value=g.user.name) }}
+                </div>
+                <div class="mb-3">
+                    {{ info_form.org.label(class="form-label") }}
+                    {{ info_form.org(class="form-control", value=g.user.organization) }}
+                </div>
+                <div class="mt-3">
+                    {{ info_form.submit(class="btn", style="color: white; background-color: #105670;") }}
+                </div>
+            </form>
+        
+        </div>
+    </div>
+    
+    <hr style="margin-top: 40px; margin-left: 20px; width: 90%;">
+
+    <div class="d-flex flex-row flex-wrap">
+        <div class="col-3 d-flex justify-content-start mt-3" style="margin-left: 40px;">
+            <h2>Senha</h2>
+        </div>
+
+        <div class="col d-flex justify-content-center">
+            <form method="POST" style="margin-top: 30px; margin-left: auto; margin-right: auto; width: 30em;">
+                {{pass_form.hidden_tag()}}
+        
+                <div class="mb-3">
+                    {{ pass_form.current.label(class="form-label") }}
+                    {{ pass_form.current(class="form-control") }}
+                    <div class="form-text">Insira sua senha atual para poder configurar uma senha nova.</div>
+                </div>
+                <div class="mb-3">
+                    {{ pass_form.new.label(class="form-label") }}
+                    {{ pass_form.new(class="form-control") }}
+                    <div class="form-text">A senha deve ter pelo menos 8 caracteres.</div>
+                </div>
+                <div class="mb-3">
+                    {{ pass_form.confirm.label(class="form-label") }}
+                    {{ pass_form.confirm(class="form-control") }}
+                </div>
+                <div class="mt-3 mb-3">
+                    {{ pass_form.submit(class="btn", style="color: white; background-color: #105670;") }}
+                </div>
+            </form>
+        
+        </div>
+
+
+    </div>
+
+</div>
+{% endblock %}
