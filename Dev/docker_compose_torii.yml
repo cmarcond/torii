@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  torii:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - 80:5000
+    environment:
+      - GITLAB_DEVIAS_IP=gitlab-web:443
+      - GITLAB_DEVIAS_URL=http://gitlab-web:443/
+      - KATA_URL=http://192.168.56.102/defectdojofinds?key=/
+      - FLASK_SECRET_KEY=change-me
+      - FLASK_ENV=development
+    depends_on:
+      - redis-dev
+    networks:
+      - gitlab-network
+    restart: always
+    container_name: secdevias-torii
+
+  # REDIS
+  redis-dev:
+    image: redis:latest
+    command: redis-server --requirepass redis_password
+    container_name: redis-dev
+    networks:
+      - gitlab-network
+    restart: always
+
+networks:
+  gitlab-network:
+    external: true
