@@ -9,7 +9,7 @@ services:
     environment:
       - GITLAB_DEVIAS_IP=gitlab-web:443
       - GITLAB_DEVIAS_URL=http://gitlab-web:443/
-      - KATA_URL=http://192.168.56.102/defectdojofinds?key=/
+      - KATA_URL=http://192.168.56.102/defectdojofinds?key=
       - FLASK_SECRET_KEY=change-me
       - FLASK_ENV=development
     depends_on:
