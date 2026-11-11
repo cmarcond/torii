@@ -84,7 +84,7 @@ def upload_code():
 
 
         try:
-            gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=False)
+            gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=config.GITLAB_SSL_VERIFY)
             project = gl.projects.create({'name': zip_project_name})
 
         except gitlab.GitlabCreateError:
@@ -232,7 +232,7 @@ def clone_gitlab():
 
 
         try:
-            gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=False)
+            gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=config.GITLAB_SSL_VERIFY)
             project = gl.projects.create({'name': project_name})
 
         except gitlab.GitlabCreateError:

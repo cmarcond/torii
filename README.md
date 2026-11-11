@@ -24,6 +24,23 @@ findings as reports. This repository is the 2023 refactor of that front end.
 | `Dev/Dockerfile`, `Dev/docker_compose_torii.yml`, `Dev/uwsgi.ini` | Container image and local stack (Torii and Redis) |
 | `DeviasDocs/` | Developer notes on each blueprint (in Portuguese) |
 
+## How it fits together
+
+```
+ browser ──► Torii (Flask + uWSGI) ──► GitLab          accounts, repositories, mirrors, webhooks
+                 │        ▲
+                 │        └────────── scanning back end  reports back as a scan progresses
+                 ▼
+               Redis                                    job status, project data, reports
+```
+
+Torii keeps no database of its own. Accounts and repositories live in GitLab,
+which Torii drives through its API with the user's own token; a submitted
+project becomes a GitLab project (uploaded, or mirrored from GitHub/GitLab), and
+a webhook starts a scan on each push. The scanning back end reports
+back to Torii, which stores job status, project data and reports in three Redis
+databases and renders them.
+
 ## Running locally
 
 ```sh
@@ -37,11 +54,21 @@ not part of this repository. Their addresses come from the environment
 (`GITLAB_DEVIAS_URL`, `GITLAB_DEVIAS_IP`, `KATA_URL`); passwords come from
 `MAIL_PASSWORD` and `REDIS_PASSWORD`. The interface text is in Portuguese.
 
-## Status
+## Status and known limitations
 
 Research prototype from 2023, published as a record of the work. It is not
-maintained and has not been hardened for production: for example, it talks to
-the internal GitLab without verifying TLS certificates. The sample reports under
-`Dev/devias/report/stored_reports/` come from scans of public test targets.
-The commit history is the original one, with credentials replaced by
-placeholders.
+maintained. Things I would change before running it anywhere that matters:
+
+- **Session key.** The Flask secret key is generated at start-up, so sessions do
+  not survive a restart or work across replicas.
+- **Secrets.** Passwords come from environment variables; there is no secret
+  store, and the Helm chart does not template them yet.
+- **Container.** The image runs as root and its Python dependencies are not
+  pinned.
+- **Tests.** The tests cover registration, login and logout and need a live
+  GitLab; there is no CI.
+- **Logging.** The code uses `print` for diagnostics.
+
+The sample reports under `Dev/devias/report/stored_reports/` come from scans of
+public test targets. The commit history is the original one, with credentials
+replaced by placeholders.

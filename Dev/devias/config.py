@@ -3,6 +3,10 @@ import os
 URL = os.environ.get('GITLAB_DEVIAS_URL', 'https://gitlab.secdevias.com/')
 BARE_URL = os.environ.get('GITLAB_DEVIAS_IP', 'gitlab.secdevias.com')
 
+# TLS certificate verification for the GitLab API. On by default; set
+# GITLAB_SSL_VERIFY=false only for a lab instance with a self-signed certificate.
+GITLAB_SSL_VERIFY = os.environ.get('GITLAB_SSL_VERIFY', 'true').lower() not in ('0', 'false', 'no')
+
 SIGN_IN_URL = URL + '/users/sign_in'
 LOGIN_URL = URL + '/users/sign_in'
 SIGN_UP_URL = URL + '/users/sign_up'

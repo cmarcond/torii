@@ -16,7 +16,7 @@ def show():
     """
 
     if g.user is not None:
-        gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=False)
+        gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=config.GITLAB_SSL_VERIFY)
 
         dates = get_all_project_dates(gl)
         recent_stats = get_recent_stats(gl)
