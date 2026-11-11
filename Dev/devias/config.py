@@ -11,10 +11,10 @@ RECOVER_URL = URL + '/users/password/new'
 RECOVER_ACTION_URL = URL + '/users/password'
 
 MAIL_ADDRESS = 'no-reply@secdevias.com'
-MAIL_PASSWORD = 'change-me'
+MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
 
 REDIS_MASTER = 'redis-dev'
-REDIS_PASSWORD = 'redis_password'
+REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD', 'redis_password')
 KATA_URL = os.environ.get('KATA_URL', 'http://kata.devias.com.br/defectdojofinds?key=')
 
 def print_all_variables():
@@ -28,9 +28,7 @@ def print_all_variables():
         ('RECOVER_URL', RECOVER_URL),
         ('RECOVER_ACTION_URL', RECOVER_ACTION_URL),
         ('MAIL_ADDRESS', MAIL_ADDRESS),
-        ('MAIL_PASSWORD', MAIL_PASSWORD),
         ('REDIS_MASTER', REDIS_MASTER),
-        ('REDIS_PASSWORD', REDIS_PASSWORD),
         ('KATA_URL', KATA_URL)
     ]
     
