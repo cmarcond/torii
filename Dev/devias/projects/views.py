@@ -132,7 +132,7 @@ def delete(project_name):
     """
 
     if project_name is not None:
-        gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=False)
+        gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=config.GITLAB_SSL_VERIFY)
         project_name_with_namespace = f"{session['user']['username']}/{project_name}"
         exclude_project = gl.projects.get(project_name_with_namespace)
         exclude_project.delete()

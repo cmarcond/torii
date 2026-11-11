@@ -19,7 +19,7 @@ def user_reports(page_number):
 
     print("Request list projects")
 
-    gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=False)
+    gl = gitlab.Gitlab(config.URL, private_token=session['private_token'], api_version=4, ssl_verify=config.GITLAB_SSL_VERIFY)
     print("After session")
 
     projects_limit = session['user']['projects_limit']

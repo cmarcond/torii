@@ -75,7 +75,7 @@ def gitlab_resubmit(webhook_token, request):
             cmd.push("origin", mirror=True)
             # cmd.push("origin")
 
-            gl = gitlab.Gitlab(config.URL, private_token=project['project_access_token'], api_version=4, ssl_verify=False)
+            gl = gitlab.Gitlab(config.URL, private_token=project['project_access_token'], api_version=4, ssl_verify=config.GITLAB_SSL_VERIFY)
 
 
             # move to util function
